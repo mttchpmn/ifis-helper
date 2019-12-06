@@ -1,36 +1,39 @@
 const puppeteer = require("puppeteer");
+const cheerio = require("cheerio");
 
-const pages = {
-  login:
-    "https://www.ifis.airways.co.nz/secure/script/user_reg/login.asp?RedirectTo=%2F",
-  areaBriefing:
-    "https://www.ifis.airways.co.nz/script/other/simple_briefing.asp"
-};
+async function getBriefingData() {
+  const pages = {
+    login:
+      "https://www.ifis.airways.co.nz/secure/script/user_reg/login.asp?RedirectTo=%2F",
+    areaBriefing:
+      "https://www.ifis.airways.co.nz/script/other/simple_briefing.asp"
+  };
 
-const selectors = {
-  username: "input[name=UserName]",
-  password: "input[name=Password]",
-  submit: "input[value=Submit]",
+  const selectors = {
+    username: "input[name=UserName]",
+    password: "input[name=Password]",
+    submit: "input[value=Submit]",
 
-  homepage: "#home-photo",
+    homepage: "#home-photo",
 
-  briefingAreas: "input[name=Areas]",
-  aawAreas: "input[name=MetAviationAreas]",
-  ATIS: "input[name=ATIS]",
-  METAR: "input[name=METAR]",
-  TAF: "input[name=TAF]",
+    briefingAreas: "input[name=Areas]",
+    aawAreas: "input[name=MetAviationAreas]",
+    ATIS: "input[name=ATIS]",
+    METAR: "input[name=METAR]",
+    TAF: "input[name=TAF]",
 
-  briefingLoaded: ".notamSectionHeader"
-};
+    briefingLoaded: ".notamSectionHeader",
+    briefingContent: ".aqcResponse"
+  };
 
-const credentials = {
-  username: "metscope",
-  password: "iamar0bot"
-};
+  const credentials = {
+    username: "metscope",
+    password: "iamar0bot"
+  };
 
-(async () => {
-  console.log("RUNNING SCRIPT");
-  const browser = await puppeteer.launch({ headless: true });
+  const startTime = new Date(); // Used for measuring execution time
+  console.log("Logging in to IFIS...");
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
   // Navigate to login and wait for load
@@ -46,9 +49,10 @@ const credentials = {
   // Submit login and wait for redirect
   await page.click(selectors.submit);
   await page.waitForSelector(selectors.homepage);
-  console.log("LOGIN SUCCESSFUL");
+  console.log("Login successful.");
 
   // Navigate to briefing selection and wait for load
+  console.log("Requesting briefing...");
   await page.goto(pages.areaBriefing);
   await page.waitForSelector(selectors.briefingAreas);
 
@@ -65,11 +69,34 @@ const credentials = {
 
   // Submit brief request and wait for redirect
   await page.click(selectors.submit);
-  await page.waitForSelector(selectors.briefingLoaded);
-  console.log("REQUEST SUCCESSFUL");
+  await page.waitForSelector(selectors.briefingContent, { visible: true });
 
+  // Navigate to same page to ensure all content loads successfully
+  await page.goto(`${page.url()}#contentContainer`, {
+    waitUntil: "networkidle0"
+  });
+  console.log("Briefing request successful.");
+
+  // Get html content from page
   const data = await page.content();
-  console.log(data);
-
   await browser.close();
+
+  // Track execution time
+  const endTime = new Date();
+  console.log(`Completed in ${endTime - startTime} seconds.`);
+
+  return data;
+}
+
+async function parseBriefingContent(html) {
+  const $ = cheerio.load(html, { xml: { normalizeWhitespace: false } });
+
+  const data = $(".aqcResponse");
+
+  console.log(data.text());
+}
+
+(async () => {
+  const html = await getBriefingData();
+  await parseBriefingContent(html);
 })();
