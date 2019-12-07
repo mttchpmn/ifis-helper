@@ -2242,31 +2242,47 @@ async function getBriefingData() {
 
 async function parseBriefingContent(html) {
   const $ = cheerio.load(html, { xml: { normalizeWhitespace: false } });
-  //   console.log($.html());
 
-  let NOTAMS = [];
+  let aerodromeList = [];
+  let allNotams = [];
 
   $(".notamLocation").each(function(i, elem) {
     let aerodrome = $(this)
       .text()
       .trim();
-    NOTAMS.push({ aerodrome });
+    aerodromeList.push(aerodrome);
   });
 
   $(".notamSeries").each(function(i, elem) {
     let item = $(this);
-    console.log("ITEM: ", item.text());
-    let pa = item
+    let series = item.text();
+    let validity = item.next().text();
+    let text = item
+      .next()
+      .next()
+      .text();
+
+    let aerodrome = item
       .prevAll(".notamLocation")
       .first()
-      .text();
-    console.log("AD: ", pa);
+      .text()
+      .trim();
+
+    let notam = { aerodrome, series, validity, text };
+    allNotams.push(notam);
   });
 
-  console.log("NOTAMS :", NOTAMS);
+  const NOTAMS = aerodromeList.map(aerodrome => {
+    const notams = allNotams.filter(n => n.aerodrome === aerodrome);
+    return { aerodrome, notams };
+  });
+
+  return NOTAMS;
 }
 
 (async () => {
-  // const html = await getBriefingData();
-  await parseBriefingContent(testHtml);
+  const html = await getBriefingData();
+  const notams = await parseBriefingContent(testHtml);
+
+  console.log("notams :", notams);
 })();
