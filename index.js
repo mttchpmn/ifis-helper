@@ -61,11 +61,11 @@ async function getBriefingData() {
   await page.click(selectors.METAR);
   await page.click(selectors.TAF);
   await page.click(selectors.briefingAreas);
-  await page.keyboard.type("1 2 3 4 5 6 7 8 9 10");
+  await page.keyboard.type("1 2 3 4 5 6 7 8 9 10"); // All briefing areas
   await page.click(selectors.aawAreas);
   await page.keyboard.type(
     "FN TA ED TK CP MH SA DV ST TN KA WW AL PL FD CY GE"
-  );
+  ); // All AAW areas
 
   // Submit brief request and wait for redirect
   await page.click(selectors.submit);
@@ -83,7 +83,7 @@ async function getBriefingData() {
 
   // Track execution time
   const endTime = new Date();
-  console.log(`Completed in ${endTime - startTime} seconds.`);
+  console.log(`Completed in ${(endTime - startTime) / 1000} seconds.`);
 
   return data;
 }
@@ -91,9 +91,10 @@ async function getBriefingData() {
 async function parseBriefingContent(html) {
   const $ = cheerio.load(html, { xml: { normalizeWhitespace: false } });
 
-  const data = $(".aqcResponse");
+  let textContent = $(".aqcResponse").text();
+  // .replace(/(&nbsp;)*/g, " ");
 
-  console.log(data.text());
+  console.log(textContent);
 }
 
 (async () => {
