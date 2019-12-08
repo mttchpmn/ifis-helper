@@ -2256,11 +2256,17 @@ async function parseBriefingContent(html) {
   $(".notamSeries").each(function(i, elem) {
     let item = $(this);
     let series = item.text();
-    let validity = item.next().text();
+    let validity = item
+      .next()
+      .text()
+      .replace(/&nbsp;/g, " ")
+      .trim();
     let text = item
       .next()
       .next()
-      .text();
+      .text()
+      .replace(/&nbsp;/g, " ")
+      .trim();
 
     let aerodrome = item
       .prevAll(".notamLocation")
@@ -2281,8 +2287,9 @@ async function parseBriefingContent(html) {
 }
 
 (async () => {
-  const html = await getBriefingData();
+  // const html = await getBriefingData();
   const notams = await parseBriefingContent(testHtml);
 
-  console.log("notams :", notams);
+  // console.log("notams :", notams);
+  console.log(JSON.stringify(notams));
 })();
