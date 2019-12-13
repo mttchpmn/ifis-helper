@@ -1,6 +1,10 @@
 const puppeteer = require("puppeteer");
 const cheerio = require("cheerio");
+let tidy = require("htmltidy2").tidy;
+
 const fs = require("fs");
+const util = require("util");
+tidy = util.promisify(tidy);
 
 async function getBriefingData() {
   const pages = {
@@ -90,7 +94,8 @@ async function getBriefingData() {
 }
 
 async function parseBriefingContent(html) {
-  const $ = cheerio.load(html, { xml: { normalizeWhitespace: false } });
+  let cleanHtml = await tidy(html);
+  const $ = cheerio.load(cleanHtml, { xml: { normalizeWhitespace: false } });
 
   let aerodromeList = [];
   let allNotams = [];
@@ -99,15 +104,12 @@ async function parseBriefingContent(html) {
     let aerodrome = $(this)
       .text()
       .trim();
-    console.log("aerodrome :", aerodrome);
     aerodromeList.push(aerodrome);
-    console.log("aerodromeList :", aerodromeList);
   });
 
   $(".notamSeries").each(function(i, elem) {
     let item = $(this);
     let series = item.text();
-    console.log("series :", series);
     let validity = item
       .next()
       .text()
@@ -123,14 +125,11 @@ async function parseBriefingContent(html) {
     let aerodrome = item
       .prevAll(".notamLocation")
       .first()
-      .html();
-    // .text();
-    // .trim();
-
-    console.log("aerodrome :", aerodrome);
+      .text()
+      .trim();
 
     let notam = { aerodrome, series, validity, text };
-    console.log("notam :", notam);
+    // console.log("notam :", notam);
     allNotams.push(notam);
   });
 
@@ -144,12 +143,8 @@ async function parseBriefingContent(html) {
 
 (async () => {
   let html = await getBriefingData();
-  // console.log(html);
-  html = fs.readFileSync("./output-clipped.html");
-  // html = fs.readFileSync("./test.html");
-  // const notams = await parseBriefingContent(testHtml);
   const notams = await parseBriefingContent(html);
 
   // console.log("notams :", notams);
-  // console.log(JSON.stringify(notams));
+  console.log(JSON.stringify(notams, null, 4));
 })();
