@@ -230,10 +230,17 @@ async function getNotams(html) {
 
   // const brief = await parseBriefingContent(html);
   const briefInfo = await getBriefInfo(html);
-  const aerodromes = await getAerodromeList(html);
-  const notams = await getNotams(html);
+  const aerodromeList = await getAerodromeList(html);
+  const allNotams = await getNotams(html);
 
-  console.log("briefInfo :", briefInfo);
-  console.log("aerodromes :", aerodromes);
-  // console.log("notams :", notams);
+  // console.log("briefInfo :", briefInfo);
+  // console.log("aerodromeList :", aerodromeList);
+
+  let aerodromes = aerodromeList.map(aerodrome => {
+    const notams = allNotams.filter(n => n.aerodrome === aerodrome);
+    return { aerodrome, notams };
+  });
+
+  console.log("AERODROMES :", aerodromes);
+  // console.log(JSON.stringify(notams, null, 4));
 })();
