@@ -201,13 +201,38 @@ async function getMet(html) {
   return allMet;
 }
 
+async function getCharts(html) {
+  const $ = await loadHtml(html);
+  let charts = {
+    sigmet: [],
+    grafor: [],
+    sigwx: []
+  };
+
+  $("a").each(function(i, elem) {
+    const item = $(this);
+
+    if (item.attr("href").includes("SIGMET"))
+      charts.sigmet.push(`https://ifis.airways.co.nz${item.attr("href")}`);
+
+    if (item.attr("href").includes("GRAFOR"))
+      charts.grafor.push(`https://ifis.airways.co.nz${item.attr("href")}`);
+
+    if (item.attr("href").includes("SIGWX"))
+      charts.sigwx.push(`https://ifis.airways.co.nz${item.attr("href")}`);
+  });
+
+  return charts;
+}
+
 (async () => {
   let html = await getBriefingData();
 
-  const briefInfo = await getBriefInfo(html);
+  const info = await getBriefInfo(html);
   const aerodromeList = await getAerodromeList(html);
   const allNotams = await getNotams(html);
   const allMet = await getMet(html);
+  const charts = await getCharts(html);
 
   let aerodromes = aerodromeList.map(aerodrome => {
     let notams = allNotams.filter(notam => notam.aerodrome === aerodrome);
@@ -221,7 +246,8 @@ async function getMet(html) {
     return result;
   });
 
-  console.log("aerodromes :", aerodromes);
+  const brief = { info, aerodromes, charts };
+  // console.log("BRIEF :", brief);
 
-  fs.writeFileSync("./result.json", JSON.stringify(aerodromes));
+  fs.writeFileSync("./result.json", JSON.stringify(brief));
 })();
