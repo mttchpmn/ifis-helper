@@ -142,6 +142,12 @@ async function getAerodromeList(html) {
 
   aerodromeList = aerodromeList.slice(0, -17); // Remove AAW areas
 
+  if (aerodromeList.indexOf("NZZC") > -1) {
+    // Remove SIGMET ('NZZC')
+    const index = aerodromeList.indexOf("NZZC");
+    aerodromeList.splice(index, 1);
+  }
+
   return aerodromeList;
 }
 
@@ -215,6 +221,25 @@ async function getAaw(html) {
   return aawList;
 }
 
+async function getSigmet(html) {
+  const $ = await loadHtml(html);
+
+  let sigmet = [];
+
+  $(".metText").each(function(i, elem) {
+    const content = $(this).text();
+
+    if (content.slice(0, 4) === "NZZC") {
+      sigmet.push({ fir: "NZZC", sigmet: content });
+    }
+    if (content.slice(0, 4) === "NZZO") {
+      sigmet.push({ fir: "NZZO", sigmet: content });
+    }
+  });
+
+  return sigmet;
+}
+
 async function getCharts(html) {
   const $ = await loadHtml(html);
   let charts = {
@@ -249,6 +274,7 @@ async function getCharts(html) {
   const allMet = await getMet(html);
 
   const aaw = await getAaw(html);
+  const sigmet = await getSigmet(html);
   const charts = await getCharts(html);
 
   let aerodromes = aerodromeList.map(aerodrome => {
@@ -263,8 +289,11 @@ async function getCharts(html) {
     return result;
   });
 
-  const brief = { info, aerodromes, aaw, charts };
-  // console.log("BRIEF :", brief);
+  const brief = { info, aerodromes, aaw, sigmet, charts };
+  console.log(
+    "=================== IFIS BRIEFING ====================\n",
+    JSON.stringify(brief, null, 2)
+  );
 
   fs.writeFileSync("./result.json", JSON.stringify(brief));
 })();
