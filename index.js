@@ -93,24 +93,36 @@ async function getBriefingData() {
   return data;
 }
 
-async function parseBriefingContent(html) {
+async function loadHtml(html) {
   let cleanHtml = await tidy(html);
-  const $ = cheerio.load(cleanHtml, { xml: { normalizeWhitespace: false } });
+  const $ = cheerio.load(cleanHtml);
 
-  let aerodromeList = [];
-  let allNotams = [];
-  let briefingInfo = {};
+  return $;
+}
 
-  briefingInfo.id = $(".headerTitle")
+async function getBriefInfo(html) {
+  const $ = await loadHtml(html);
+
+  let briefInfo = {};
+
+  briefInfo.id = $(".headerTitle")
     .text()
     .trim()
     .split("ID: ")[1];
 
   $(".headerValue").each(function(i, elem) {
-    if (i === 1) briefingInfo.validFrom = $(this).text();
-    if (i === 2) briefingInfo.validTo = $(this).text();
-    if (i === 6) briefingInfo.issueDate = $(this).text();
+    if (i === 1) briefInfo.validFrom = $(this).text();
+    if (i === 2) briefInfo.validTo = $(this).text();
+    if (i === 6) briefInfo.issueDate = $(this).text();
   });
+
+  return briefInfo;
+}
+
+async function getAerodromeList(html) {
+  const $ = await loadHtml(html);
+
+  let aerodromeList = [];
 
   $(".notamLocation").each(function(i, elem) {
     let aerodrome = $(this)
@@ -118,6 +130,24 @@ async function parseBriefingContent(html) {
       .trim();
     aerodromeList.push(aerodrome);
   });
+
+  $(".metLocation").each(function(i, elem) {
+    let aerodrome = $(this)
+      .text()
+      .trim();
+
+    if (!aerodromeList.includes(aerodrome)) aerodromeList.push(aerodrome);
+  });
+
+  aerodromeList = aerodromeList.slice(0, -17); // Remove AAW areas from end
+
+  return aerodromeList;
+}
+
+async function getNotams(html) {
+  const $ = await loadHtml(html);
+
+  let allNotams = [];
 
   $(".notamSeries").each(function(i, elem) {
     let item = $(this);
@@ -141,22 +171,69 @@ async function parseBriefingContent(html) {
       .trim();
 
     let notam = { aerodrome, series, validity, text };
-    // console.log("notam :", notam);
     allNotams.push(notam);
   });
 
-  const notams = aerodromeList.map(aerodrome => {
-    const notams = allNotams.filter(n => n.aerodrome === aerodrome);
-    return { aerodrome, notams };
-  });
-
-  return { briefingInfo, notams };
+  return allNotams;
 }
+
+// async function parseBriefingContent(html) {
+//   let cleanHtml = await tidy(html);
+//   const $ = cheerio.load(cleanHtml, { xml: { normalizeWhitespace: false } });
+
+//   let aerodromeList = [];
+//   let allNotams = [];
+
+//   $(".notamLocation").each(function(i, elem) {
+//     let aerodrome = $(this)
+//       .text()
+//       .trim();
+//     aerodromeList.push(aerodrome);
+//   });
+
+//   $(".notamSeries").each(function(i, elem) {
+//     let item = $(this);
+//     let series = item.text();
+//     let validity = item
+//       .next()
+//       .text()
+//       .replace(/&nbsp;/g, " ")
+//       .trim();
+//     let text = item
+//       .next()
+//       .next()
+//       .text()
+//       .replace(/&nbsp;/g, " ")
+//       .trim();
+
+//     let aerodrome = item
+//       .prevAll(".notamLocation")
+//       .first()
+//       .text()
+//       .trim();
+
+//     let notam = { aerodrome, series, validity, text };
+//     // console.log("notam :", notam);
+//     allNotams.push(notam);
+//   });
+
+//   const notams = aerodromeList.map(aerodrome => {
+//     const notams = allNotams.filter(n => n.aerodrome === aerodrome);
+//     return { aerodrome, notams };
+//   });
+
+//   return { notams };
+// }
 
 (async () => {
   let html = await getBriefingData();
-  const brief = await parseBriefingContent(html);
 
-  console.log("brief :", brief);
-  // console.log(JSON.stringify(notams, null, 4));
+  // const brief = await parseBriefingContent(html);
+  const briefInfo = await getBriefInfo(html);
+  const aerodromes = await getAerodromeList(html);
+  const notams = await getNotams(html);
+
+  console.log("briefInfo :", briefInfo);
+  console.log("aerodromes :", aerodromes);
+  // console.log("notams :", notams);
 })();
