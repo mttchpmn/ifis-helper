@@ -38,7 +38,7 @@ async function getBriefingData() {
 
   const startTime = new Date(); // Used for measuring execution time
   console.log("Logging in to IFIS...");
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
 
   // Navigate to login and wait for load
@@ -99,6 +99,18 @@ async function parseBriefingContent(html) {
 
   let aerodromeList = [];
   let allNotams = [];
+  let briefingInfo = {};
+
+  briefingInfo.id = $(".headerTitle")
+    .text()
+    .trim()
+    .split("ID: ")[1];
+
+  $(".headerValue").each(function(i, elem) {
+    if (i === 1) briefingInfo.validFrom = $(this).text();
+    if (i === 2) briefingInfo.validTo = $(this).text();
+    if (i === 6) briefingInfo.issueDate = $(this).text();
+  });
 
   $(".notamLocation").each(function(i, elem) {
     let aerodrome = $(this)
@@ -133,18 +145,18 @@ async function parseBriefingContent(html) {
     allNotams.push(notam);
   });
 
-  const NOTAMS = aerodromeList.map(aerodrome => {
+  const notams = aerodromeList.map(aerodrome => {
     const notams = allNotams.filter(n => n.aerodrome === aerodrome);
     return { aerodrome, notams };
   });
 
-  return NOTAMS;
+  return { briefingInfo, notams };
 }
 
 (async () => {
   let html = await getBriefingData();
-  const notams = await parseBriefingContent(html);
+  const brief = await parseBriefingContent(html);
 
-  // console.log("notams :", notams);
-  console.log(JSON.stringify(notams, null, 4));
+  console.log("brief :", brief);
+  // console.log(JSON.stringify(notams, null, 4));
 })();
