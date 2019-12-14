@@ -211,11 +211,11 @@ async function getMet(html) {
 
   let aerodromes = aerodromeList.map(aerodrome => {
     let notams = allNotams.filter(notam => notam.aerodrome === aerodrome);
-    let result = { aerodrome, notams };
+    let result = { aerodrome, notams, atis: null, metar: null, taf: null };
 
     let met = allMet.filter(met => met.aerodrome === aerodrome);
     for (obj of met) {
-      result[obj.type] = obj.content;
+      result[obj.type.toLowerCase()] = obj.content;
     }
 
     return result;
