@@ -127,19 +127,20 @@ async function getAerodromeList(html) {
   $(".notamLocation").each(function(i, elem) {
     let aerodrome = $(this)
       .text()
-      .trim();
+      .trim()
+      .substring(0, 4);
     aerodromeList.push(aerodrome);
   });
 
   $(".metLocation").each(function(i, elem) {
     let aerodrome = $(this)
       .text()
-      .trim();
-
+      .trim()
+      .substring(0, 4);
     if (!aerodromeList.includes(aerodrome)) aerodromeList.push(aerodrome);
   });
 
-  aerodromeList = aerodromeList.slice(0, -17); // Remove AAW areas from end
+  aerodromeList = aerodromeList.slice(0, -17); // Remove AAW areas
 
   return aerodromeList;
 }
@@ -168,7 +169,8 @@ async function getNotams(html) {
       .prevAll(".notamLocation")
       .first()
       .text()
-      .trim();
+      .trim()
+      .substring(0, 4);
 
     let notam = { aerodrome, series, validity, text };
     allNotams.push(notam);
@@ -190,53 +192,13 @@ async function getMet(html) {
       .prevAll(".metLocation")
       .first()
       .text()
-      .trim();
+      .trim()
+      .substring(0, 4);
 
-    console.log("\n\naerodrome :", aerodrome);
-    console.log("type :", type);
-    console.log("content :", content);
+    if (type !== "AVIATION") allMet.push({ aerodrome, type, content });
   });
-}
 
-async function parseBriefingContent(html) {
-  //   let cleanHtml = await tidy(html);
-  //   const $ = cheerio.load(cleanHtml, { xml: { normalizeWhitespace: false } });
-  //   let aerodromeList = [];
-  //   let allNotams = [];
-  //   $(".notamLocation").each(function(i, elem) {
-  //     let aerodrome = $(this)
-  //       .text()
-  //       .trim();
-  //     aerodromeList.push(aerodrome);
-  //   });
-  //   $(".notamSeries").each(function(i, elem) {
-  //     let item = $(this);
-  //     let series = item.text();
-  //     let validity = item
-  //       .next()
-  //       .text()
-  //       .replace(/&nbsp;/g, " ")
-  //       .trim();
-  //     let text = item
-  //       .next()
-  //       .next()
-  //       .text()
-  //       .replace(/&nbsp;/g, " ")
-  //       .trim();
-  //     let aerodrome = item
-  //       .prevAll(".notamLocation")
-  //       .first()
-  //       .text()
-  //       .trim();
-  //     let notam = { aerodrome, series, validity, text };
-  //     // console.log("notam :", notam);
-  //     allNotams.push(notam);
-  //   });
-  //   const notams = aerodromeList.map(aerodrome => {
-  //     const notams = allNotams.filter(n => n.aerodrome === aerodrome);
-  //     return { aerodrome, notams };
-  //   });
-  //   return { notams };
+  return allMet;
 }
 
 (async () => {
@@ -247,14 +209,19 @@ async function parseBriefingContent(html) {
   const allNotams = await getNotams(html);
   const allMet = await getMet(html);
 
-  // console.log("briefInfo :", briefInfo);
-  // console.log("aerodromeList :", aerodromeList);
-
   let aerodromes = aerodromeList.map(aerodrome => {
-    const notams = allNotams.filter(n => n.aerodrome === aerodrome);
-    return { aerodrome, notams };
+    let notams = allNotams.filter(notam => notam.aerodrome === aerodrome);
+    let result = { aerodrome, notams };
+
+    let met = allMet.filter(met => met.aerodrome === aerodrome);
+    for (obj of met) {
+      result[obj.type] = obj.content;
+    }
+
+    return result;
   });
 
-  // console.log("AERODROMES :", aerodsromes);
-  // console.log(JSON.stringify(notams, null, 4));
+  console.log("aerodromes :", aerodromes);
+
+  fs.writeFileSync("./result.json", JSON.stringify(aerodromes));
 })();
