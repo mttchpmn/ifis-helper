@@ -201,6 +201,20 @@ async function getMet(html) {
   return allMet;
 }
 
+async function getAaw(html) {
+  const $ = await loadHtml(html);
+  const aawList = [];
+
+  $(".metText.metPreformatted").each(function(i, elem) {
+    const aaw = $(this).text();
+    const area = aaw.slice(13, 16);
+
+    aawList.push({ area, aaw });
+  });
+
+  return aawList;
+}
+
 async function getCharts(html) {
   const $ = await loadHtml(html);
   let charts = {
@@ -229,9 +243,12 @@ async function getCharts(html) {
   let html = await getBriefingData();
 
   const info = await getBriefInfo(html);
+
   const aerodromeList = await getAerodromeList(html);
   const allNotams = await getNotams(html);
   const allMet = await getMet(html);
+
+  const aaw = await getAaw(html);
   const charts = await getCharts(html);
 
   let aerodromes = aerodromeList.map(aerodrome => {
@@ -246,7 +263,7 @@ async function getCharts(html) {
     return result;
   });
 
-  const brief = { info, aerodromes, charts };
+  const brief = { info, aerodromes, aaw, charts };
   // console.log("BRIEF :", brief);
 
   fs.writeFileSync("./result.json", JSON.stringify(brief));
