@@ -22,6 +22,7 @@ async function getBriefingData() {
     homepage: "#home-photo",
 
     briefingAreas: "input[name=Areas]",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
     aawAreas: "input[name=MetAviationAreas]",
     ATIS: "input[name=ATIS]",
     METAR: "input[name=METAR]",
@@ -38,7 +39,10 @@ async function getBriefingData() {
 
   const startTime = new Date(); // Used for measuring execution time
   console.log("Logging in to IFIS...");
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  });
   const page = await browser.newPage();
 
   // Navigate to login and wait for load
