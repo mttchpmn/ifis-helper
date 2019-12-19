@@ -269,29 +269,33 @@ async function getCharts(html) {
 }
 
 module.exports = async () => {
-  let html = await getBriefingData();
+  try {
+    let html = await getBriefingData();
 
-  const info = await getBriefInfo(html);
+    const info = await getBriefInfo(html);
 
-  const aerodromeList = await getAerodromeList(html);
-  const allNotams = await getNotams(html);
-  const allMet = await getMet(html);
+    const aerodromeList = await getAerodromeList(html);
+    const allNotams = await getNotams(html);
+    const allMet = await getMet(html);
 
-  const aaw = await getAaw(html);
-  const sigmet = await getSigmet(html);
-  const charts = await getCharts(html);
+    const aaw = await getAaw(html);
+    const sigmet = await getSigmet(html);
+    const charts = await getCharts(html);
 
-  let aerodromes = aerodromeList.map(aerodrome => {
-    let notams = allNotams.filter(notam => notam.aerodrome === aerodrome);
-    let result = { aerodrome, notams, atis: null, metar: null, taf: null };
+    let aerodromes = aerodromeList.map(aerodrome => {
+      let notams = allNotams.filter(notam => notam.aerodrome === aerodrome);
+      let result = { aerodrome, notams, atis: null, metar: null, taf: null };
 
-    let met = allMet.filter(met => met.aerodrome === aerodrome);
-    for (obj of met) {
-      result[obj.type.toLowerCase()] = obj.content;
-    }
+      let met = allMet.filter(met => met.aerodrome === aerodrome);
+      for (obj of met) {
+        result[obj.type.toLowerCase()] = obj.content;
+      }
 
-    return result;
-  });
+      return result;
+    });
 
-  return { info, aerodromes, aaw, sigmet, charts };
+    return { info, aerodromes, aaw, sigmet, charts };
+  } catch (error) {
+    throw error;
+  }
 };
