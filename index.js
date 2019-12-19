@@ -213,9 +213,9 @@ async function getAaw(html) {
 
   $(".metText.metPreformatted").each(function(i, elem) {
     const aaw = $(this).text();
-    const area = aaw.slice(13, 16);
+    const area = aaw.slice(14, 16);
 
-    aawList.push({ area, aaw });
+    if (area !== "--") aawList.push({ area, aaw });
   });
 
   return aawList;
