@@ -40,7 +40,7 @@ async function getBriefingData() {
   const startTime = new Date(); // Used for measuring execution time
   console.log("Logging in to IFIS...");
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
