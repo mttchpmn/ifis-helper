@@ -48,6 +48,8 @@ async function getBriefingData() {
     ]
   });
   const page = await browser.newPage();
+  page.setRequestInterception(true);
+  page.on("request", r => r.continue());
 
   // Navigate to login and wait for load
   await page.goto(pages.login);
