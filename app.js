@@ -2,7 +2,7 @@ const express = require("express");
 const scrapeIfis = require("./scrapeIfis");
 
 const app = express();
-const port = 4500;
+const port = process.env.PORT || 8000;
 
 app.get("/", (req, res) => res.send(`API listening on port ${port}`));
 
