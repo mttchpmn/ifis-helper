@@ -264,7 +264,7 @@ async function getCharts(html) {
   return charts;
 }
 
-(async () => {
+module.exports = async () => {
   let html = await getBriefingData();
 
   const info = await getBriefInfo(html);
@@ -289,11 +289,5 @@ async function getCharts(html) {
     return result;
   });
 
-  const brief = { info, aerodromes, aaw, sigmet, charts };
-  console.log(
-    "=================== IFIS BRIEFING ====================\n",
-    JSON.stringify(brief, null, 2)
-  );
-
-  fs.writeFileSync("./result.json", JSON.stringify(brief));
-})();
+  return { info, aerodromes, aaw, sigmet, charts };
+};
