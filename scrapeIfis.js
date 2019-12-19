@@ -51,6 +51,7 @@ async function getBriefingData() {
 
   // Navigate to login and wait for load
   await page.goto(pages.login);
+  console.log("Navigated to login page.");
   await page.waitForSelector(selectors.username);
 
   // Input login credentials
