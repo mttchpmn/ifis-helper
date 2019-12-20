@@ -40,16 +40,15 @@ async function getBriefingData() {
   const startTime = new Date(); // Used for measuring execution time
   console.log("Logging in to IFIS...");
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      "--user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'"
+      "--proxy-server=socks4://202.49.183.168:34897",
+      "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36"
     ]
   });
   const page = await browser.newPage();
-  page.setRequestInterception(true);
-  page.on("request", r => r.continue());
 
   // Navigate to login and wait for load
   await page.goto(pages.login);
